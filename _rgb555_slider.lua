@@ -49,6 +49,10 @@ local function custom_slider(dialog, channel)
             }
             c.color = ch_gradient[i555]
             c:fillRect(r)
+            if i555 > 0 then
+                c.color = Color{ r=0, g=0, b=0 }
+                c:fillRect(Rectangle{ x = r.x, y = r.y, width = 1, height = 2 })
+            end
         end
 
         c:drawThemeImage("mini_slider_thumb", 1 + inner.x + 6 * ch_fg_idx, 0)
