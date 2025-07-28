@@ -90,8 +90,8 @@ local function channel_slider(dialog, channel)
   })
 end
 
----Add a text entry bound to a channel value
----@param dialog Dialog the Dialog to add the text entry to
+---Add a number entry bound to a channel value
+---@param dialog Dialog the Dialog to add the number entry to
 ---@param channel "red"|"green"|"blue" the channel to bind to
 local function channel_entry(dialog, channel)
   return dialog:number {
