@@ -1,5 +1,3 @@
---#region Custom slider
-
 local gradients = {
     red = {},
     green = {},
@@ -17,7 +15,6 @@ local function update_color_gradient(t, base_color, channel)
         t[i_555] = color
     end
 end
-
 
 ---@param dialog Dialog
 ---@param channel "red"|"green"|"blue"
@@ -84,28 +81,8 @@ local function custom_slider(dialog, channel)
     }
 end
 
-
-
---#endregion
-
---#region "Installing" the custom slider in Dialog
---#endregion
-
---#region Dialog definition
 local dlg = assert(Dialog('RGB555 Picker'))
--- local __i = getmetatable(dlg).__index
--- getmetatable(dlg).__index = setmetatable(
---     { custom_slider = custom_slider },
---     { __index = __i })
--- local bounds = dlg.bounds
--- bounds.x = 10
--- bounds.w = 300
--- bounds.h = 120
--- dlg.bounds = bounds
 custom_slider(dlg, "red")
 custom_slider(dlg, "green")
 custom_slider(dlg, "blue")
--- dlg:separator{ text = "stuff..." }
--- dlg:label{ id = "txt", hexpand=true, vexpand=false, height=200 }
 dlg:show()
---#endregion
