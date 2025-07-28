@@ -10,35 +10,44 @@ local function make_channel_gradient555(t, base_color, channel)
   end
 end
 
+local focused_channel = "red"
+
+local function focus_channel(dialog, channel)
+  dialog:modify{ id=channel .. "_entry", focus=true }
+  focused_channel = channel
+end
+
 ---Recreate a mini_slider with the 32 shades of a RGB555 color channel
 ---@param dialog Dialog the Dialog to draw a canvas on
 ---@param channel "red"|"green"|"blue" the channel
 local function channel_slider(dialog, channel)
   local ch_gradient = {}
-  local ch_fg_idx = 0
+  local ch_idx = 0
   local mouse_down = false
 
   local function set_idx(new_idx)
-    if new_idx ~= ch_fg_idx then
-      ch_fg_idx = new_idx
+    if new_idx ~= ch_idx then
+      ch_idx = new_idx
       app.fgColor = ch_gradient[new_idx]
-      dialog:modify({ id = channel .. "_entry", text = tostring(new_idx) })
+      dialog:modify{ id = channel .. "_entry", text = tostring(new_idx) }
       dialog:repaint()
     end
   end
 
   local function slider_onpaint(ev)
     make_channel_gradient555(ch_gradient, app.fgColor, channel)
-    ch_fg_idx = app.fgColor[channel] >> 3
+    ch_idx = app.fgColor[channel] >> 3
 
     ---@type GraphicsContext
     local c = ev.context
     local bounds = Rectangle(2, 4, c.width - 4, c.height - 4)
-    local inner = Rectangle(bounds.x + 1, bounds.y + 1, bounds.width - 2, bounds.height - 3)
+    local inner = Rectangle(bounds.x + 1, bounds.y + 1, bounds.width - 2,
+      bounds.height - (mouse_down and 2 or 3))
 
-    c:drawThemeRect("mini_slider_empty", bounds)
-    c.color = c.theme.color.window_face
-    c:fillRect(inner)
+    c:drawThemeRect(
+      mouse_down and "slider_full_focused" or "mini_slider_full",
+      bounds
+    )
 
     for i555 = 0, 31 do
       local r = Rectangle({
@@ -55,7 +64,11 @@ local function channel_slider(dialog, channel)
       end
     end
 
-    c:drawThemeImage("mini_slider_thumb", 1 + inner.x + 6 * ch_fg_idx, 0)
+    c:drawThemeImage(
+      mouse_down and "mini_slider_thumb_focused" or "mini_slider_thumb",
+      1 + inner.x + 6 * ch_idx, 0
+    )
+
   end -- slider_onpaint
 
   local function handle_mouse(x)
@@ -74,19 +87,30 @@ local function channel_slider(dialog, channel)
     onpaint = slider_onpaint,
     onmousedown = function(ev)
       mouse_down = true
-      handle_mouse(ev.x)
+      if ev.button == MouseButton.LEFT then
+        handle_mouse(ev.x)
+      end
+      dialog:repaint() -- to draw with "focused" variant of theme images
     end,
     onmouseup = function()
       mouse_down = false
+      dialog:repaint() -- to draw with "unfocused" variant of theme images
     end,
     onmousemove = function(ev)
-      if mouse_down then
+      if mouse_down and ev.button == MouseButton.LEFT then
         handle_mouse(ev.x)
       end
     end,
     onwheel = function(ev)
-      set_idx(math.floor(ch_fg_idx + ev.deltaY))
+      set_idx(math.floor(ch_idx + ev.deltaY))
     end,
+    onkeydown = function (ev)
+      if ev.code == "ArrowRight" then
+        set_idx(ch_idx + 1)
+      elseif ev.code == "ArrowLeft" then
+        set_idx(ch_idx - 1)
+      end
+    end
   })
 end
 
