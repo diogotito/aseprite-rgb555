@@ -13,6 +13,7 @@ end
 ---Recreate a mini_slider with the 32 shades of a RGB555 color channel
 ---@param dialog Dialog the Dialog to draw a canvas on
 ---@param channel "red"|"green"|"blue" the channel
+---@param extra_options { focus: boolean? }?
 local function channel_slider(dialog, channel, extra_options)
   local ch_gradient = {}
   local ch_idx = 0
@@ -55,25 +56,24 @@ local function channel_slider(dialog, channel, extra_options)
       end
     end
 
+    -- Thumb
     local r = Rectangle{
-      x = inner.x + 6 * ch_idx - 3,
-      y = inner.y - 3,
-      width = 12,
-      height = inner.height + 5,
+      x = inner.x + 6 * ch_idx - (mouse_down and 2 or 0),
+      y = inner.y - (mouse_down and 3 or 3),
+      width = (mouse_down and 10 or 6),
+      height = inner.height + (mouse_down and 5 or 5),
     }
     c:beginPath()
     c:roundedRect(r, 1)
     c.color = mouse_down and Color{ r=255, g=255, b=255 } or Color{ r=0, g=0, b=0 }
     c:stroke()
-    -- c:beginPath()
-    -- c:roundedRect({ x = r.x, y = r.y, w = r.w - 1, h = r.h - 1 }, 2)
     c.color = ch_gradient[ch_idx]
     c:fillRect{ x = r.x + 1, y = r.y + 1, w = r.w - 1, h = r.h - 1 }
     -- c:fill()
 
     c:drawThemeImage(
       mouse_down and "mini_slider_thumb_focused" or "mini_slider_thumb",
-      1 + inner.x + 6 * ch_idx, 0
+      1 + inner.x + 6 * ch_idx, (mouse_down and 0 or 0)
     )
 
   end -- slider_onpaint
@@ -160,26 +160,26 @@ local function channel_entry(dialog, channel)
 end
 
 local fgc_listenercode
-local fgcolor_timer ---@type Timer
+local deferred_fix_fgcolor_timer ---@type Timer
 
 local dlg = assert(Dialog{
   title="RGB555 Picker",
   -- notitlebar=true,
   onclose=function ()
     app.events:off(fgc_listenercode)
-    fgcolor_timer:stop()
+    deferred_fix_fgcolor_timer:stop()
   end
 })
 
 local function on_fgcolorchange()
   app.events:off(fgc_listenercode) -- to avoid a C stack overflow
-  fgcolor_timer:start()
+  deferred_fix_fgcolor_timer:start()
   dlg:modify { id = "red_entry", text = app.fgColor.red >> 3 }
   dlg:modify { id = "green_entry", text = app.fgColor.green >> 3 }
   dlg:modify { id = "blue_entry", text = app.fgColor.blue >> 3 }
 end
 
-local function fix_fgcolor()
+local function deferred_fix_fgcolor()
   app.fgColor = Color {
     red = (app.fgColor.red & ~7) | (app.fgColor.red >> 5),
     green = (app.fgColor.green & ~7) | (app.fgColor.green >> 5),
@@ -187,10 +187,10 @@ local function fix_fgcolor()
   }
   dlg:repaint()
   fgc_listenercode = app.events:on("fgcolorchange", on_fgcolorchange)
-  fgcolor_timer:stop()
+  deferred_fix_fgcolor_timer:stop()
 end
 
-fgcolor_timer = Timer{ interval=0.001, ontick=fix_fgcolor }
+deferred_fix_fgcolor_timer = Timer{ interval=0.001, ontick=deferred_fix_fgcolor }
 
 fgc_listenercode = app.events:on("fgcolorchange", on_fgcolorchange)
 
@@ -202,6 +202,7 @@ channel_entry(dlg, "blue")
 channel_slider(dlg, "red", { focus=true }):newrow()
 channel_slider(dlg, "green"):newrow()
 channel_slider(dlg, "blue"):newrow()
+dlg:check { id="live_update", selected=true, text="Fix foreground color on the fly" }
 -- dlg:button{ text="Ok", hexpand=false, vexpand=false, width=20 }
 
 local scale = app.preferences.general.ui_scale
