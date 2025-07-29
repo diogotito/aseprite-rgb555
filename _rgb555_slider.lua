@@ -133,13 +133,16 @@ local function channel_slider(dialog, channel, start_focused)
         set_idx(31)
         ev:stopPropagation()
       elseif ev.code == "Tab" or ev.code == "ArrowUp" or ev.code == "ArrowDown" then
+        ev:stopPropagation()
         dialog:repaint()
       elseif ev.code == "Enter" then
         focused = false
         dialog:repaint()
-        dialog:modify{ id=channel .. "_entry", focus=true }
-      elseif ev.code == "Esc" then
+        dialog:modify { id = channel .. "_entry", focus = true }
+        ev:stopPropagation()
+      elseif ev.code == "Escape" then
         dialog:close()
+        ev:stopPropagation()
       end
     end,
     onkeyup = function (ev)
@@ -173,28 +176,37 @@ local function channel_entry(dialog, channel)
 end
 
 local fgc_listenercode
+local fgcolor_timer ---@type Timer
 
 local dlg = assert(Dialog{
   title="RGB555 Picker",
   -- notitlebar=true,
   onclose=function ()
     app.events:off(fgc_listenercode)
+    fgcolor_timer:stop()
   end
 })
 
 local function on_fgcolorchange()
-  app.events:off(fgc_listenercode)  -- to avoid a C stack overflow
-  app.fgColor = Color{
-    red = (app.fgColor.red & ~7) | (app.fgColor.red >> 5),
-    green = (app.fgColor.green & ~7) | (app.fgColor.green >> 5),
-    blue = (app.fgColor.blue & ~7) | (app.fgColor.blue >> 5)
-  }
-  dlg:modify { id="red_entry", text=app.fgColor.red >> 3 }
+  app.events:off(fgc_listenercode) -- to avoid a C stack overflow
+  fgcolor_timer:start()
+  dlg:modify { id = "red_entry", text = app.fgColor.red >> 3 }
   dlg:modify { id = "green_entry", text = app.fgColor.green >> 3 }
   dlg:modify { id = "blue_entry", text = app.fgColor.blue >> 3 }
+end
+
+local function fix_fgcolor()
+  app.fgColor = Color {
+    red = (app.fgColor.red & ~7) | (app.fgColor.red >> 5),
+    green = (app.fgColor.green & ~7) | (app.fgColor.green >> 5),
+    blue = (app.fgColor.blue & ~7) | (app.fgColor.blue >> 5),
+  }
   dlg:repaint()
   fgc_listenercode = app.events:on("fgcolorchange", on_fgcolorchange)
+  fgcolor_timer:stop()
 end
+
+fgcolor_timer = Timer{ interval=0.001, ontick=fix_fgcolor }
 
 fgc_listenercode = app.events:on("fgcolorchange", on_fgcolorchange)
 
