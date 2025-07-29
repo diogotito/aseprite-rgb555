@@ -13,11 +13,11 @@ end
 ---Recreate a mini_slider with the 32 shades of a RGB555 color channel
 ---@param dialog Dialog the Dialog to draw a canvas on
 ---@param channel "red"|"green"|"blue" the channel
-local function channel_slider(dialog, channel)
+local function channel_slider(dialog, channel, start_focused)
   local ch_gradient = {}
   local ch_idx = 0
   local mouse_down = false
-  local focused = false
+  local focused = start_focused
 
   local function set_idx(new_idx)
     new_idx = math.max(0, math.min(31, math.floor(new_idx)))
@@ -94,7 +94,7 @@ local function channel_slider(dialog, channel)
     width = 6 * 32 + 7,
     vexpand = false,
     height = 16,
-    focus = true,
+    -- focus = true,
     onpaint = slider_onpaint,
     onmousedown = function(ev)
       focused = true
@@ -138,6 +138,8 @@ local function channel_slider(dialog, channel)
         focused = false
         dialog:repaint()
         dialog:modify{ id=channel .. "_entry", focus=true }
+      elseif ev.code == "Esc" then
+        dialog:close()
       end
     end,
     onkeyup = function (ev)
@@ -170,12 +172,51 @@ local function channel_entry(dialog, channel)
   }
 end
 
-local dlg = assert(Dialog("RGB555 Picker"))
+local fgc_listenercode
+
+local dlg = assert(Dialog{
+  title="RGB555 Picker",
+  -- notitlebar=true,
+  onclose=function ()
+    app.events:off(fgc_listenercode)
+  end
+})
+
+local function on_fgcolorchange()
+  app.events:off(fgc_listenercode)  -- to avoid a C stack overflow
+  app.fgColor = Color{
+    red = (app.fgColor.red & ~7) | (app.fgColor.red >> 5),
+    green = (app.fgColor.green & ~7) | (app.fgColor.green >> 5),
+    blue = (app.fgColor.blue & ~7) | (app.fgColor.blue >> 5)
+  }
+  dlg:modify { id="red_entry", text=app.fgColor.red >> 3 }
+  dlg:modify { id = "green_entry", text = app.fgColor.green >> 3 }
+  dlg:modify { id = "blue_entry", text = app.fgColor.blue >> 3 }
+  dlg:repaint()
+  fgc_listenercode = app.events:on("fgcolorchange", on_fgcolorchange)
+end
+
+fgc_listenercode = app.events:on("fgcolorchange", on_fgcolorchange)
+
+-- dlg:separator{ text="RGB555 values" }
 dlg:label{ text="R (0-31)" }:label{ text="G (0-31)" }:label{ text="B (0-31)" }
 channel_entry(dlg, "red")
 channel_entry(dlg, "green")
 channel_entry(dlg, "blue")
 channel_slider(dlg, "red"):newrow()
-channel_slider(dlg, "green"):newrow()
+channel_slider(dlg, "green", true):newrow()
 channel_slider(dlg, "blue"):newrow()
-dlg:show{ wait=true }
+-- dlg:button{ text="Ok", hexpand=false, vexpand=false, width=20 }
+
+local scale = app.preferences.general.ui_scale
+local custom_bounds = Rectangle{
+  x = dlg.bounds.x, -- 2 * scale,
+  y=app.window.height - 25 * scale - dlg.bounds.h,
+  w=dlg.bounds.w,
+  h=dlg.bounds.h,
+}
+dlg:show{
+  wait=false,
+  bounds=custom_bounds,
+}
+dlg:repaint()
