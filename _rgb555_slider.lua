@@ -13,11 +13,10 @@ end
 ---Recreate a mini_slider with the 32 shades of a RGB555 color channel
 ---@param dialog Dialog the Dialog to draw a canvas on
 ---@param channel "red"|"green"|"blue" the channel
-local function channel_slider(dialog, channel, start_focused)
+local function channel_slider(dialog, channel, extra_options)
   local ch_gradient = {}
   local ch_idx = 0
   local mouse_down = false
-  local focused = start_focused
 
   local function set_idx(new_idx)
     new_idx = math.max(0, math.min(31, math.floor(new_idx)))
@@ -26,7 +25,6 @@ local function channel_slider(dialog, channel, start_focused)
       app.fgColor = ch_gradient[new_idx]
       dialog:modify{ id = channel .. "_entry", text = tostring(new_idx), focus = false }
     end
-    focused = true
     dialog:repaint()
   end
 
@@ -52,34 +50,32 @@ local function channel_slider(dialog, channel, start_focused)
       c.color = ch_gradient[i555]
       c:fillRect(r)
       if i555 > 0 then
-        if focused and (i555 == ch_idx or i555 == ch_idx + 1) then
-          c.color = Color{ r = 255, g = 255, b = 255 }
-        else
-          c.color = Color{ r = 0, g = 0, b = 0 }
-        end
+        c.color = Color{ r = 0, g = 0, b = 0 }
         c:fillRect{ x = r.x, y = r.y, width = 1, height = 2 }
       end
     end
 
-    if mouse_down then
-      local r = Rectangle{
-        x = inner.x + 6 * ch_idx - 2,
-        y = inner.y - 3,
-        width = 11,
-        height = inner.height + 6,
-      }
-      c.color = Color{ r=255, g=255, b=255 }
-      c:fillRect(r)
-      c.color = ch_gradient[ch_idx]
-      c:fillRect{ x = r.x + 1, y = r.y + 1, w = r.w - 2, h = r.h - 2 }
-    end
+    local r = Rectangle{
+      x = inner.x + 6 * ch_idx - 3,
+      y = inner.y - 3,
+      width = 12,
+      height = inner.height + 5,
+    }
+    c:beginPath()
+    c:roundedRect(r, 1)
+    c.color = mouse_down and Color{ r=255, g=255, b=255 } or Color{ r=0, g=0, b=0 }
+    c:stroke()
+    -- c:beginPath()
+    -- c:roundedRect({ x = r.x, y = r.y, w = r.w - 1, h = r.h - 1 }, 2)
+    c.color = ch_gradient[ch_idx]
+    c:fillRect{ x = r.x + 1, y = r.y + 1, w = r.w - 1, h = r.h - 1 }
+    -- c:fill()
 
     c:drawThemeImage(
-      focused and "mini_slider_thumb_focused" or "mini_slider_thumb",
+      mouse_down and "mini_slider_thumb_focused" or "mini_slider_thumb",
       1 + inner.x + 6 * ch_idx, 0
     )
 
-    focused = false
   end -- slider_onpaint
 
   local function handle_mouse(x)
@@ -90,6 +86,7 @@ local function channel_slider(dialog, channel, start_focused)
   return dialog:canvas({
     id = channel .. "_slider",
     label = channel:sub(1, 1):upper() .. ":",
+    focus = extra_options and extra_options.focus,
     hexpand = false,
     width = 6 * 32 + 7,
     vexpand = false,
@@ -97,21 +94,15 @@ local function channel_slider(dialog, channel, start_focused)
     -- focus = true,
     onpaint = slider_onpaint,
     onmousedown = function(ev)
-      focused = true
-      dialog:repaint() -- to draw with "focused" variant of theme images
-      if ev.button == MouseButton.LEFT then
-        mouse_down = true
-        handle_mouse(ev.x)
-      end
+      mouse_down = true
+      handle_mouse(ev.x)
     end,
     onmouseup = function()
       mouse_down = false
-      focused = true
       dialog:repaint()
     end,
     onmousemove = function(ev)
       if mouse_down and ev.button == MouseButton.LEFT then
-        focused = true
         handle_mouse(ev.x)
       end
     end,
@@ -119,7 +110,6 @@ local function channel_slider(dialog, channel, start_focused)
       set_idx(math.floor(ch_idx + ev.deltaY))
     end,
     onkeydown = function (ev)
-      focused = true
       if ev.code == "ArrowRight" then
         set_idx(ch_idx + 1)
         ev:stopPropagation()
@@ -136,8 +126,6 @@ local function channel_slider(dialog, channel, start_focused)
         ev:stopPropagation()
         dialog:repaint()
       elseif ev.code == "Enter" then
-        focused = false
-        dialog:repaint()
         dialog:modify { id = channel .. "_entry", focus = true }
         ev:stopPropagation()
       elseif ev.code == "Escape" then
@@ -145,10 +133,6 @@ local function channel_slider(dialog, channel, start_focused)
         ev:stopPropagation()
       end
     end,
-    onkeyup = function (ev)
-      focused = true
-      dialog:repaint()
-    end
   })
 end
 
@@ -215,8 +199,8 @@ dlg:label{ text="R (0-31)" }:label{ text="G (0-31)" }:label{ text="B (0-31)" }
 channel_entry(dlg, "red")
 channel_entry(dlg, "green")
 channel_entry(dlg, "blue")
-channel_slider(dlg, "red"):newrow()
-channel_slider(dlg, "green", true):newrow()
+channel_slider(dlg, "red", { focus=true }):newrow()
+channel_slider(dlg, "green"):newrow()
 channel_slider(dlg, "blue"):newrow()
 -- dlg:button{ text="Ok", hexpand=false, vexpand=false, width=20 }
 
