@@ -6,6 +6,7 @@ Aseprite, like the Super Famicom and the Game Boy Color.
 ## Features
 
 - **Custom 5-bit sliders**
+  <img align=right width="388" height="110" alt="imagem" src="https://github.com/user-attachments/assets/6c63815e-bef7-4f47-b368-15c816363abd" />
 
   They work like the built-in RGB sliders in the color picker,
   but they were adapted for 5-bit values.
