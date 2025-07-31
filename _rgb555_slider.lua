@@ -107,7 +107,7 @@ local function channel_slider(dialog, channel, extra_options)
       end
     end,
     onwheel = function(ev)
-      set_idx(math.floor(ch_idx + ev.deltaY))
+      set_idx(math.floor(ch_idx - ev.deltaY))
     end,
     onkeydown = function (ev)
       if ev.code == "ArrowRight" then
@@ -202,7 +202,7 @@ channel_entry(dlg, "blue")
 channel_slider(dlg, "red", { focus=true }):newrow()
 channel_slider(dlg, "green"):newrow()
 channel_slider(dlg, "blue"):newrow()
-dlg:check { id="live_update", selected=true, text="Fix foreground color on the fly" }
+-- dlg:check { id="live_update", selected=true, text="Fix foreground color on the fly" }
 -- dlg:button{ text="Ok", hexpand=false, vexpand=false, width=20 }
 
 local scale = app.preferences.general.ui_scale

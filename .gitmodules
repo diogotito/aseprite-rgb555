@@ -1,0 +1,3 @@
+[submodule "aseprite-type-definition"]
+	path = aseprite-type-definition
+	url = https://github.com/Tsukina-7mochi/aseprite-type-definition.git
