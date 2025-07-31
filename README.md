@@ -1,7 +1,6 @@
 # Aseprite RGB555 Picker
 
-A custom dialog script for picking colors for 15-bit high color systems in
-Aseprite, like the Super Famicom and the Game Boy Color.
+A custom dialog script for picking colors for 15-bit high color systems, like the Super Famicom (SNES) and the Game Boy Color.
 
 ## Features
 
