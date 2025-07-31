@@ -5,10 +5,21 @@ Aseprite, like the Super Famicom and the Game Boy Color.
 
 ## Features
 
-- Pick values from 0 to 31 for the R, G and B color channels with number entries
-  and with the custom-made 5-bit sliders.
-- Snaps Aseprite's current foreground color to its 15-bit counterpart anytime
-  it changes through any mean (built-in RGB/HSV/HSL picker, eye dropper,
-  palette...) while the dialog is open.
+- **Custom 5-bit sliders**
 
-https://github.com/user-attachments/assets/6d7c8ab9-4e24-4431-8f9a-87f543e22d66
+  They work like the built-in RGB sliders in the color picker,
+  but they were adapted for 5-bit values.
+
+  Change values by clicking, dragging, scrolling the mouse wheel or
+  pressing the arrow keys while the middle or right mouse button is held down.
+
+- **Live quantization of foreground color**
+
+  Keep the RGB555 Picker open, and whenever you pick a new foreground color
+  through any means (built-in RGB/HSV/HSL picker, eye dropper, palette...),
+  it gets quantized to one of RGB555's colors.
+
+  Use this to experiment with how your colors get quantized to RGB555 or to
+  quickly convert some colors in your sprite.
+
+<https://github.com/user-attachments/assets/6d7c8ab9-4e24-4431-8f9a-87f543e22d66>
